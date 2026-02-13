@@ -41,3 +41,8 @@ IMG_CURSOR_KNIFE = "Knife Cursor.png"
 # --- Scaling ---
 HAND_SCALE = 0.3
 CURSOR_SCALE = 0.08
+
+# --- Minigame Settings ---
+GRACE_PERIOD_DURATION = 5000 # ms
+START_POINT_RADIUS = 30
+PULSE_SPEED = 0.1 # Factor for sine wave speed

@@ -184,7 +184,9 @@ class NervePath:
             current_x += random.randint(30, 80)
             current_y += random.randint(-50, 50)
             # Clamp Y
-            current_y = max(50, min(SCREEN_HEIGHT - 50, current_y))
+            # Limit to top 2/3 of screen to avoid hand obstruction
+            max_y = (SCREEN_HEIGHT * 2) // 3
+            current_y = max(50, min(max_y, current_y))
             points.append((current_x, current_y))
         
         return points

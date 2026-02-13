@@ -9,6 +9,7 @@ class StateManager:
         self.sanity = INITIAL_SANITY
         self.score = 0
         self.font = pygame.font.Font(None, 36)
+        self.large_font = pygame.font.Font(None, 100) # For countdown
         
         # PREP State variables
         self.ingredients = pygame.sprite.Group()
@@ -18,11 +19,15 @@ class StateManager:
         # TRAUMA State variables
         self.nerve_path = None
         self.deviated = False
-        self.deviation_start_time = 0
+        self.trauma_start_time = 0
+        self.is_grace_period = False
+        self.pulse_timer = 0
 
     def reset_trauma(self):
         self.nerve_path = NervePath()
         self.deviated = False
+        self.trauma_start_time = pygame.time.get_ticks()
+        self.is_grace_period = True
 
     def handle_input(self, event):
         if self.state == "PREP":
@@ -63,6 +68,18 @@ class StateManager:
             if not self.nerve_path:
                 self.reset_trauma()
 
+            now = pygame.time.get_ticks()
+            elapsed = now - self.trauma_start_time
+            
+            if self.is_grace_period:
+                if elapsed >= GRACE_PERIOD_DURATION:
+                    self.is_grace_period = False
+                else:
+                    # In grace period, just update pulse timer and return
+                    self.pulse_timer += 1
+                    return
+
+            # Active Game Logic (Post Grace Period)
             mouse_pos = pygame.mouse.get_pos()
             distance = self.nerve_path.check_deviation(mouse_pos)
 
@@ -88,11 +105,37 @@ class StateManager:
             self.ingredients.draw(surface)
         
         elif self.state == "TRAUMA":
-            surface.fill(RADICCHIO_RED)
+            # Background
+            if self.is_grace_period:
+                # Pulsating Red
+                import math
+                pulse = (math.sin(self.pulse_timer * PULSE_SPEED) + 1) / 2 # 0 to 1
+                # Interpolate between BLACK and RADICCHIO_RED
+                # Dark: (0, 0, 0), Bright: RADICCHIO_RED (142, 35, 68)
+                r = int(0 + (RADICCHIO_RED[0] - 0) * pulse)
+                g = int(0 + (RADICCHIO_RED[1] - 0) * pulse)
+                b = int(0 + (RADICCHIO_RED[2] - 0) * pulse)
+                surface.fill((r, g, b))
+            else:
+                surface.fill(RADICCHIO_RED)
+
             if self.nerve_path:
                 self.nerve_path.draw(surface)
+                
+                # Highlight Start Point during grace period
+                if self.is_grace_period:
+                    start_pos = self.nerve_path.start_point
+                    # Draw glowing green circle
+                    pygame.draw.circle(surface, GREEN, (int(start_pos[0]), int(start_pos[1])), START_POINT_RADIUS, 3)
+                    
+                    # Draw Countdown
+                    remaining = max(0, GRACE_PERIOD_DURATION - (pygame.time.get_ticks() - self.trauma_start_time))
+                    seconds = (remaining // 1000) + 1
+                    timer_text = self.large_font.render(str(seconds), True, WHITE)
+                    text_rect = timer_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+                    surface.blit(timer_text, text_rect)
             
-            if self.deviated:
+            if self.deviated and not self.is_grace_period:
                 text_surf = self.font.render("INJURY DETECTED!", True, WHITE)
                 surface.blit(text_surf, (SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2))
 

@@ -22,12 +22,16 @@ class StateManager:
         self.trauma_start_time = 0
         self.is_grace_period = False
         self.pulse_timer = 0
+        self.deviation_timer = 0
+        self.last_frame_time = 0
 
     def reset_trauma(self):
         self.nerve_path = NervePath()
         self.deviated = False
         self.trauma_start_time = pygame.time.get_ticks()
         self.is_grace_period = True
+        self.deviation_timer = 0
+        self.last_frame_time = pygame.time.get_ticks()
 
     def handle_input(self, event):
         if self.state == "PREP":
@@ -85,12 +89,17 @@ class StateManager:
 
             if distance > NERVE_DEVIATION_LIMIT:
                 self.deviated = True
-                # Trigger "Injury" - currently just a console log or flag
-                print("INJURY! Deviation too high.")
-                self.sanity -= 1 # Rapid drain on failure? Or instant fail?
-                # For now just drain sanity
+                
+                # Damage tick logic
+                self.deviation_timer += (now - self.last_frame_time)
+                if self.deviation_timer >= DAMAGE_TICK_INTERVAL:
+                    print("INJURY! Deviation too high.")
+                    self.sanity -= 1 
+                    self.deviation_timer = 0 # Reset after damage
             else:
                 self.deviated = False
+                self.deviation_timer = 0 # Reset if safe
+                
                 # Healing mechanic? Or just survive? 
                 # If they reach the end, maybe restore sanity to PREP state?
                 # Simplified: if x > SCREEN_WIDTH - 50, success
@@ -98,6 +107,8 @@ class StateManager:
                     self.sanity = 50 # Restore some sanity
                     self.state = "PREP"
                     self.ingredients.empty()
+            
+            self.last_frame_time = now
 
     def draw(self, surface):
         if self.state == "PREP":

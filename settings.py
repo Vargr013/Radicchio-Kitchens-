@@ -21,7 +21,8 @@ GREEN = (0, 255, 0)
 INITIAL_SANITY = 100
 TRAUMA_THRESHOLD = 20
 SANITY_PENALTY_MISS = 15
-NERVE_DEVIATION_LIMIT = 15
+NERVE_DEVIATION_LIMIT = 22 # medium restriction
+DAMAGE_TICK_INTERVAL = 750 # ms
 
 # --- Assets Paths ---
 # Create empty folders for:
@@ -43,6 +44,6 @@ HAND_SCALE = 0.3
 CURSOR_SCALE = 0.08
 
 # --- Minigame Settings ---
-GRACE_PERIOD_DURATION = 5000 # ms
+GRACE_PERIOD_DURATION = 3000 # ms
 START_POINT_RADIUS = 30
 PULSE_SPEED = 0.1 # Factor for sine wave speed

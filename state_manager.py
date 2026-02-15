@@ -1,5 +1,6 @@
 
 import pygame
+import math
 from settings import *
 from sprites import *
 
@@ -27,6 +28,9 @@ class StateManager:
         self.damage_flash_timer = 0
         self.last_mouse_pos = None
         self.slice_trail = []
+        self.last_feedback = ""
+        self.last_feedback_color = WHITE
+        self.feedback_timer = 0
 
     def reset_trauma(self):
         self.nerve_path = NervePath()
@@ -69,27 +73,70 @@ class StateManager:
                 if len(self.slice_trail) > 10: # Max trail length
                     self.slice_trail.pop(0)
 
-                # Check line segment collision (prevents tunneling on fast swipes)
-                # Also check point collision for stationary mouse down
+                # Check for collisions with ingredients
+                hits = []
                 for ingredient in self.ingredients:
-                    # Check point (stationary slice)
-                    hit = ingredient.rect.collidepoint(mouse_pos)
+                    # Check point (stationary slice - ignores angle)
+                    # Actually, stationary slice has no angle. Disallow? 
+                    # Or treat as "Bad Cut"? "Drag" implies movement.
+                    # Let's require movement for a "Good" cut.
+                    
+                    hit = False
+                    if ingredient.rect.collidepoint(mouse_pos):
+                         hit = True # Simple hit
                     
                     # Check line (fast slice)
                     if not hit and self.last_mouse_pos:
-                         # clipline returns a tuple if the line intersects the rect, empty if nothing
                          if ingredient.rect.clipline(self.last_mouse_pos, mouse_pos):
                              hit = True
                     
                     if hit:
+                        hits.append(ingredient)
+
+                for hit in hits:
+                    # Angle Calculation
+                    if self.last_mouse_pos and self.last_mouse_pos != mouse_pos:
+                        dx = mouse_pos[0] - self.last_mouse_pos[0]
+                        dy = mouse_pos[1] - self.last_mouse_pos[1]
+                        # Cartesian Angle (Y up)
+                        slice_angle = math.degrees(math.atan2(-dy, dx))
+                    else:
+                        slice_angle = 0 # Default if no movement
+                    
+                    # Normalize angles to [0, 180)
+                    slice_norm = slice_angle % 180
+                    target_norm = hit.angle % 180
+                    
+                    diff = abs(slice_norm - target_norm)
+                    diff = min(diff, 180 - diff) # Handle wrap around (e.g. 179 vs 1)
+                    
+                    # Scoring Logic
+                    if diff <= 15:
                         self.score += 1
-                        ingredient.kill()
-                        # Optional: Add slice sound or effect here
+                        print(f"Excellent Cut! Diff: {diff:.1f}")
+                        self.last_feedback = "Perfect!"
+                        self.last_feedback_color = GREEN
+                    elif diff <= 30:
+                        self.sanity -= 5
+                        print(f"Good/Bad Cut? Diff: {diff:.1f}")
+                        self.last_feedback = "Poor Angle!"
+                        self.last_feedback_color = (255, 165, 0) # Orange
+                    else:
+                        self.sanity -= 10
+                        print(f"Bad Cut! Diff: {diff:.1f}")
+                        self.last_feedback = "BAD CUT!"
+                        self.last_feedback_color = RADICCHIO_RED
+
+                    self.feedback_timer = 1000 # Show for 1s
+                    hit.kill()
+
             else:
                 self.slice_trail.clear()
 
             # Update Ingredients (handles blinking)
             self.ingredients.update()
+            
+            # Check for Expiry logic...
             
             # Check for Expiry
             for ingredient in self.ingredients:
@@ -157,6 +204,14 @@ class StateManager:
             # Draw Slice Trail
             if len(self.slice_trail) > 1:
                 pygame.draw.lines(surface, WHITE, False, self.slice_trail, 3)
+
+            # Draw Feedback
+            if self.feedback_timer > 0:
+                text = self.font.render(self.last_feedback, True, self.last_feedback_color)
+                rect = text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+                surface.blit(text, rect)
+                self.feedback_timer -= (pygame.time.get_ticks() - self.last_frame_time) # Approx dt
+
         
         elif self.state == "TRAUMA":
             # Background

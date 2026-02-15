@@ -154,20 +154,27 @@ class Ingredient(pygame.sprite.Sprite):
         super().__init__()
         # Placeholder for ingredient image.
         # Ideally: self.image = pygame.image.load(os.path.join(ASSET_DIR_IMAGES, 'radicchio.png')).convert_alpha()
-        self.image = pygame.Surface((64, 64))
+        
+        # Base surface
+        base_size = 64
+        self.image = pygame.Surface((base_size, base_size), pygame.SRCALPHA)
         self.image.fill(GREEN)
+        
+        # Draw a visual "cut line" (Horizontal Center)
+        # This represents 0 degrees rotation
+        mid_y = base_size // 2
+        pygame.draw.line(self.image, VEIN_WHITE, (0, mid_y), (base_size, mid_y), 3)
+        
+        # Random Rotation
+        self.angle = random.randint(0, 360)
+        self.image = pygame.transform.rotate(self.image, self.angle)
+        
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(0, SCREEN_WIDTH - self.rect.width)
         # Limit spawning to the top 1/3 of the screen
         max_y = SCREEN_HEIGHT // 3 - self.rect.height
         self.rect.y = random.randrange(0, max(1, max_y)) 
         self.creation_time = pygame.time.get_ticks()
-
-        # Draw a visual "cut line"
-        # Random angle or just diagonal
-        pygame.draw.line(self.image, VEIN_WHITE, (0, 0), (self.rect.width, self.rect.height), 3)
-        # Maybe a second one for an 'X' or just one? One looks like a slice path.
-        # Let's do a single diagonal for now.
 
     def update(self):
         now = pygame.time.get_ticks()

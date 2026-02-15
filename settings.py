@@ -23,6 +23,8 @@ TRAUMA_THRESHOLD = 20
 SANITY_PENALTY_MISS = 15
 NERVE_DEVIATION_LIMIT = 22 # medium restriction
 DAMAGE_TICK_INTERVAL = 750 # ms
+INGREDIENT_LIFETIME = 10000 # 10 seconds
+INGREDIENT_WARNING_TIME = 6000 # 6 seconds
 
 # --- Assets Paths ---
 # Create empty folders for:

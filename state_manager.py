@@ -25,6 +25,8 @@ class StateManager:
         self.deviation_timer = 0
         self.last_frame_time = 0
         self.damage_flash_timer = 0
+        self.last_mouse_pos = None
+        self.slice_trail = []
 
     def reset_trauma(self):
         self.nerve_path = NervePath()
@@ -34,23 +36,12 @@ class StateManager:
         self.deviation_timer = 0
         self.last_frame_time = pygame.time.get_ticks()
         self.damage_flash_timer = 0
+        self.last_mouse_pos = None
+        self.slice_trail = []
 
     def handle_input(self, event):
-        if self.state == "PREP":
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                clicked_ingredient = None
-                for ingredient in self.ingredients:
-                    if ingredient.rect.collidepoint(event.pos):
-                        clicked_ingredient = ingredient
-                        break
-                
-                if clicked_ingredient:
-                    self.score += 1
-                    clicked_ingredient.kill()
-                else:
-                    self.sanity -= SANITY_PENALTY_MISS
-        
-        elif self.state == "TRAUMA":
+        # Input handling for prep moved to update for continuous drag detection
+        if self.state == "TRAUMA":
             # Input handling for trauma mostly happens in update via mouse pos
             pass
 
@@ -68,7 +59,48 @@ class StateManager:
                 self.ingredients.add(Ingredient())
                 self.spawn_timer = now
 
+            # Interaction & Expiry Logic
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()[0] # Left Click
+            
+            # Slicing Logic: active if mouse is down
+            if mouse_pressed:
+                self.slice_trail.append(mouse_pos)
+                if len(self.slice_trail) > 10: # Max trail length
+                    self.slice_trail.pop(0)
+
+                # Check line segment collision (prevents tunneling on fast swipes)
+                # Also check point collision for stationary mouse down
+                for ingredient in self.ingredients:
+                    # Check point (stationary slice)
+                    hit = ingredient.rect.collidepoint(mouse_pos)
+                    
+                    # Check line (fast slice)
+                    if not hit and self.last_mouse_pos:
+                         # clipline returns a tuple if the line intersects the rect, empty if nothing
+                         if ingredient.rect.clipline(self.last_mouse_pos, mouse_pos):
+                             hit = True
+                    
+                    if hit:
+                        self.score += 1
+                        ingredient.kill()
+                        # Optional: Add slice sound or effect here
+            else:
+                self.slice_trail.clear()
+
+            # Update Ingredients (handles blinking)
             self.ingredients.update()
+            
+            # Check for Expiry
+            for ingredient in self.ingredients:
+                elapsed = now - ingredient.creation_time
+                if elapsed > INGREDIENT_LIFETIME:
+                    ingredient.kill()
+                    self.sanity -= SANITY_PENALTY_MISS
+                    # Optional: Text feedback for miss
+            
+            # Update last mouse pos for next frame slicing
+            self.last_mouse_pos = mouse_pos
 
         elif self.state == "TRAUMA":
             if not self.nerve_path:
@@ -121,6 +153,10 @@ class StateManager:
         if self.state == "PREP":
             surface.fill(BLACK) # Kitchen background placeholder
             self.ingredients.draw(surface)
+            
+            # Draw Slice Trail
+            if len(self.slice_trail) > 1:
+                pygame.draw.lines(surface, WHITE, False, self.slice_trail, 3)
         
         elif self.state == "TRAUMA":
             # Background

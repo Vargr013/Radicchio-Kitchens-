@@ -163,6 +163,26 @@ class Ingredient(pygame.sprite.Sprite):
         self.rect.y = random.randrange(0, max(1, max_y)) 
         self.creation_time = pygame.time.get_ticks()
 
+        # Draw a visual "cut line"
+        # Random angle or just diagonal
+        pygame.draw.line(self.image, VEIN_WHITE, (0, 0), (self.rect.width, self.rect.height), 3)
+        # Maybe a second one for an 'X' or just one? One looks like a slice path.
+        # Let's do a single diagonal for now.
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        elapsed = now - self.creation_time
+        
+        # Blinking effect if warning time passed
+        if elapsed > INGREDIENT_WARNING_TIME:
+            # Blink interval: 200ms
+            if (now // 200) % 2 == 0:
+                self.image.set_alpha(50) # Dim
+            else:
+                self.image.set_alpha(255) # Bright
+        else:
+            self.image.set_alpha(255) # Ensure normal alpha otherwise
+
 class NervePath:
     def __init__(self):
         self.points = self.generate_path()

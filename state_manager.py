@@ -24,6 +24,7 @@ class StateManager:
         self.pulse_timer = 0
         self.deviation_timer = 0
         self.last_frame_time = 0
+        self.damage_flash_timer = 0
 
     def reset_trauma(self):
         self.nerve_path = NervePath()
@@ -32,6 +33,7 @@ class StateManager:
         self.is_grace_period = True
         self.deviation_timer = 0
         self.last_frame_time = pygame.time.get_ticks()
+        self.damage_flash_timer = 0
 
     def handle_input(self, event):
         if self.state == "PREP":
@@ -86,16 +88,20 @@ class StateManager:
             # Active Game Logic (Post Grace Period)
             mouse_pos = pygame.mouse.get_pos()
             distance = self.nerve_path.check_deviation(mouse_pos)
+            
+            dt = now - self.last_frame_time
+            self.last_frame_time = now
 
             if distance > NERVE_DEVIATION_LIMIT:
                 self.deviated = True
                 
                 # Damage tick logic
-                self.deviation_timer += (now - self.last_frame_time)
+                self.deviation_timer += dt
                 if self.deviation_timer >= DAMAGE_TICK_INTERVAL:
                     print("INJURY! Deviation too high.")
                     self.sanity -= 1 
                     self.deviation_timer = 0 # Reset after damage
+                    self.damage_flash_timer = 150 # Flash for 150ms
             else:
                 self.deviated = False
                 self.deviation_timer = 0 # Reset if safe
@@ -108,7 +114,8 @@ class StateManager:
                     self.state = "PREP"
                     self.ingredients.empty()
             
-            self.last_frame_time = now
+            if self.damage_flash_timer > 0:
+                self.damage_flash_timer -= dt
 
     def draw(self, surface):
         if self.state == "PREP":
@@ -127,6 +134,9 @@ class StateManager:
                 g = int(0 + (RADICCHIO_RED[1] - 0) * pulse)
                 b = int(0 + (RADICCHIO_RED[2] - 0) * pulse)
                 surface.fill((r, g, b))
+            elif self.damage_flash_timer > 0:
+                 # Flash White (same as countdown)
+                 surface.fill(WHITE)
             else:
                 surface.fill(RADICCHIO_RED)
 
@@ -146,9 +156,7 @@ class StateManager:
                     text_rect = timer_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
                     surface.blit(timer_text, text_rect)
             
-            if self.deviated and not self.is_grace_period:
-                text_surf = self.font.render("INJURY DETECTED!", True, WHITE)
-                surface.blit(text_surf, (SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2))
+            # Removed Text Blit
 
         # HUD
         sanity_text = self.font.render(f"Sanity: {self.sanity}", True, WHITE)

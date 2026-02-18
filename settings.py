@@ -49,3 +49,4 @@ CURSOR_SCALE = 0.08
 GRACE_PERIOD_DURATION = 3000 # ms
 START_POINT_RADIUS = 30
 PULSE_SPEED = 0.1 # Factor for sine wave speed
+FADE_SPEED = 5 # Alpha change per frame for fade out/in

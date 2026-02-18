@@ -114,18 +114,21 @@ class ChefHand(pygame.sprite.Sprite):
         
         self.update_visuals(angle_r, angle_l)
 
-    def set_state(self, health):
-        # Example logic, adjust thresholds
-        prev_state = self.left_hand_state
-        if health > 60:
+    def set_hand_stage(self, stage):
+        """
+        Sets the visual stage of the left hand based on damage level.
+        0 = Normal
+        1 = Damaged
+        2+ = Badly Damaged
+        """
+        if stage == 0:
             self.left_hand_state = "normal"
-        elif health > 20:
+        elif stage == 1:
             self.left_hand_state = "damaged"
         else:
             self.left_hand_state = "badly_damaged"
-            
-        if prev_state != self.left_hand_state:
-            self.update_visuals()
+        
+        self.update_visuals()
 
     def set_attack(self, attacking):
         if self.is_attacking != attacking:

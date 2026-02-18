@@ -32,7 +32,7 @@ def main():
             state_manager.handle_input(event)
 
         # 2. Update
-        state_manager.update()
+        state_manager.update(hand)
         all_sprites.update()
 
         # 3. Draw

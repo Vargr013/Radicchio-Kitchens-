@@ -32,6 +32,11 @@ class StateManager:
         self.last_feedback_color = WHITE
         self.feedback_timer = 0
 
+        # Reset & Progression Variables
+        self.hand_stage = 0
+        self.fade_alpha = 0
+        self.fade_state = "IDLE" # IDLE, FADING_OUT, FADING_IN
+
     def reset_trauma(self):
         self.nerve_path = NervePath()
         self.deviated = False
@@ -49,10 +54,39 @@ class StateManager:
             # Input handling for trauma mostly happens in update via mouse pos
             pass
 
-    def update(self):
+    def update(self, hand=None):
+        # --- Handle Fading Logic ---
+        if self.sanity <= 0 and self.fade_state == "IDLE":
+            self.fade_state = "FADING_OUT"
+
+        if self.fade_state == "FADING_OUT":
+            self.fade_alpha += FADE_SPEED
+            if self.fade_alpha >= 255:
+                self.fade_alpha = 255
+                # Perform Hard Reset
+                self.fade_state = "FADING_IN"
+                self.sanity = INITIAL_SANITY
+                self.state = "PREP"
+                self.hand_stage += 1
+                if hand:
+                    hand.set_hand_stage(self.hand_stage)
+                self.ingredients.empty()
+                self.score = 0 # Optional: Reset score on "death"? Keeping it for now.
+            return # Block other updates while fading out
+
+        elif self.fade_state == "FADING_IN":
+            self.fade_alpha -= FADE_SPEED
+            if self.fade_alpha <= 0:
+                self.fade_alpha = 0
+                self.fade_state = "IDLE"
+            # Allow game updates while fading in for smoothness, or return to block?
+            # Let's return to block interactions until fully visible? 
+            # Actually, standard is to let it run but maybe block input.
+            # For simplicity, let's just run.
+
         if self.state == "PREP":
             # Sanity Check
-            if self.sanity <= TRAUMA_THRESHOLD:
+            if self.sanity <= TRAUMA_THRESHOLD and self.fade_state == "IDLE": # Only enter trauma if not dying
                 self.state = "TRAUMA"
                 self.reset_trauma()
                 return
@@ -254,3 +288,10 @@ class StateManager:
         score_text = self.font.render(f"Score: {self.score}", True, WHITE)
         surface.blit(sanity_text, (10, 10))
         surface.blit(score_text, (10, 50))
+
+        # --- Draw Fade Overlay ---
+        if self.fade_alpha > 0:
+            fade_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            fade_surface.fill(BLACK)
+            fade_surface.set_alpha(self.fade_alpha)
+            surface.blit(fade_surface, (0, 0))

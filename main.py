@@ -1,3 +1,7 @@
+"""
+Main entry point for the Radicchio Kitchens game.
+Initializes Pygame, sets up the display, and runs the main game loop.
+"""
 
 import pygame
 import sys
@@ -6,6 +10,10 @@ from state_manager import StateManager
 from sprites import ChefHand, Cursor
 
 def main():
+    """
+    Initializes the game, creates necessary objects, and starts the game loop.
+    Handles event processing, updates game state, and renders the scene.
+    """
     # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))

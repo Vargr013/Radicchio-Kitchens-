@@ -1,8 +1,13 @@
 
+"""
+This module contains all configuration variables, constants, and assets paths for the game.
+"""
+
 # settings.py
 import pygame
 
 # --- Screen Settings ---
+# Dimensions of the game window
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 FPS = 60

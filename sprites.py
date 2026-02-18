@@ -7,6 +7,10 @@ from settings import *
 import os
 
 class ChefHand(pygame.sprite.Sprite):
+    """
+    Represents the chef's hands on the screen.
+    Handles loading, positioning, and rendering of hand sprites, including state changes based on damage.
+    """
     def __init__(self):
         super().__init__()
         self.load_images()
@@ -136,6 +140,10 @@ class ChefHand(pygame.sprite.Sprite):
             self.update_visuals()
 
 class Cursor(pygame.sprite.Sprite):
+    """
+    Represents the player's cursor (aiming point) in the game.
+    Follows the mouse position.
+    """
     def __init__(self):
         super().__init__()
         path = os.path.join(ASSET_DIR_IMAGES, IMG_CURSOR_KNIFE)
@@ -153,6 +161,10 @@ class Cursor(pygame.sprite.Sprite):
         self.rect.center = pygame.mouse.get_pos()
 
 class Ingredient(pygame.sprite.Sprite):
+    """
+    Represents a sliceable ingredient in the PREP phrase.
+    Handles random spawning, rotation, and blinking before expiry.
+    """
     def __init__(self):
         super().__init__()
         # Placeholder for ingredient image.
@@ -194,6 +206,10 @@ class Ingredient(pygame.sprite.Sprite):
             self.image.set_alpha(255) # Ensure normal alpha otherwise
 
 class NervePath:
+    """
+    Represents the path for the TRAUMA minigame.
+    Generates a random jagged path and handles collision detection for deviation.
+    """
     def __init__(self):
         self.points = self.generate_path()
         self.start_point = self.points[0]

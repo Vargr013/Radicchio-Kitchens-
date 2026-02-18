@@ -5,6 +5,10 @@ from settings import *
 from sprites import *
 
 class StateManager:
+    """
+    Manages the game state, transitions, and core game logic.
+    Handles switching between PREP and TRAUMA modes, managing sanity, score, and input.
+    """
     def __init__(self):
         self.state = "PREP"
         self.sanity = INITIAL_SANITY
@@ -38,6 +42,10 @@ class StateManager:
         self.fade_state = "IDLE" # IDLE, FADING_OUT, FADING_IN
 
     def reset_trauma(self):
+        """
+        Resets the state for the TRAUMA minigame.
+        Generates a new nerve path and resets timers.
+        """
         self.nerve_path = NervePath()
         self.deviated = False
         self.trauma_start_time = pygame.time.get_ticks()
@@ -55,6 +63,10 @@ class StateManager:
             pass
 
     def update(self, hand=None):
+        """
+        Main update loop for the game state.
+        Handles logic for PREP (slicing) and TRAUMA (path following) modes.
+        """
         # --- Handle Fading Logic ---
         if self.sanity <= 0 and self.fade_state == "IDLE":
             self.fade_state = "FADING_OUT"
